@@ -212,8 +212,8 @@ def make_5_7_find_cyclop():
             mydoc.add_heading('Exp = ' + str(i * Nstreams + j) + ', G_inh = ' + str(G_inh), 2)
             print('k_systems:', m.k_systems, 'lenIC:', len(IC_i))
             for j in range(0, m.k_systems):
-                mydoc.add_paragraph(str(IC_i[j * m.k_systems]) + ', ' + str(IC_i[j * m.k_systems + 1]) + ', ' +
-                                    str(IC_i[j * m.k_systems + 2]) + ', ' + str(IC_i[j * m.k_systems + 3]) + ',')
+                mydoc.add_paragraph(str(IC_i[j * m.k]) + ', ' + str(IC_i[j * m.k + 1]) + ', ' +
+                                    str(IC_i[j * m.k + 2]) + ', ' + str(IC_i[j * m.k + 3]) + ',')
 
             mydoc.add_picture(path_IC)
             mydoc.add_picture(path_last_state)
