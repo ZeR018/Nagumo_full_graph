@@ -13,7 +13,7 @@ highAccuracy = False
 k_systems = 6
 
 # Пути для сохранения данных
-path_Doc = './Data/results/' + '7elems_UC_1' + '.docx'
+path_Doc = './Data/results/' + '7elems_UC_big_3' + '.docx'
 
 R_data_path = './Data/r_data_protivofaza2.txt'
 Graphic_data_path = './Data/graphics/saved_fig'
@@ -104,12 +104,12 @@ def make_investigation_with_changed_IC(index, doNeedShow=False):
 
     G_inh = round(0.05 + 0.0002 * index, 6)
     # При маленьких значениях параметра связи берем большое время интегрирования
-    if G_inh > - 0.005:
+    if G_inh < 0.005:
         tMax = 10000
-    elif G_inh > - 0.02:
+    elif G_inh < 0.02:
         tMax = 5000
     else:
-        tMax = 200
+        tMax = 1000
 
     IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
     R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions\
@@ -180,7 +180,7 @@ def make_5_7_walk_to_Ginh():
 
 
 def make_5_7_find_cyclop():
-    maxCount = 5
+    maxCount = 10
     m.k_systems = 7
     # IC = []
     # # Генерируем НУ
@@ -210,15 +210,15 @@ def make_5_7_find_cyclop():
 
             # Запись в файл .docx
             mydoc.add_heading('Exp = ' + str(i * Nstreams + j) + ', G_inh = ' + str(G_inh), 2)
-            print('k_systems:', m.k_systems, 'lenIC:', len(IC_i))
             for j in range(0, m.k_systems):
                 mydoc.add_paragraph(str(IC_i[j * m.k]) + ', ' + str(IC_i[j * m.k + 1]) + ', ' +
                                     str(IC_i[j * m.k + 2]) + ', ' + str(IC_i[j * m.k + 3]) + ',')
 
-            mydoc.add_picture(path_IC)
-            mydoc.add_picture(path_last_state)
-            mydoc.add_picture(path_x, width=docx.shared.Inches(8))
+            mydoc.add_picture(path_IC, width=docx.shared.Inches(4))
+            mydoc.add_picture(path_x, width=docx.shared.Inches(6))
+            mydoc.add_picture(path_last_state, width=docx.shared.Inches(5))
             mydoc.add_picture(path_R, width=docx.shared.Inches(5))
+            #mydoc.add_page_break()
             mydoc.save(path_Doc)
 
 
@@ -237,3 +237,4 @@ def make_5_7_find_cyclop():
 # #m.showInitialConditions(last_state, 'Last state')
 
 make_5_7_find_cyclop()
+#make_investigation_with_changed_IC(2)

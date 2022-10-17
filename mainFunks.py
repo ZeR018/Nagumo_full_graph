@@ -112,11 +112,11 @@ def naguma_systems(t, r):
     return resArr
 
 
-def graphics_4_with_G_inh(ginh_step, initialConditions):
+def graphics_4_with_G_inh(ginh_, initialConditions):
     startTime = time.time()
 
     global G_inh, g_inh
-    G_inh = ginh_step / 10.0
+    G_inh = ginh_
     g_inh = []
     for i in range(0, k_systems):
         g_inh.append([])
@@ -129,9 +129,7 @@ def graphics_4_with_G_inh(ginh_step, initialConditions):
     if highAccuracy:
         sol = solve_ivp(naguma_systems, [0, tMax], initialConditions, rtol=1e-11, atol=1e-11)
     else:
-        print('solve')
         sol = solve_ivp(naguma_systems, [0, tMax], initialConditions, rtol=1e-8, atol=1e-8)
-    print('end')
     xs = []
     ys = []
     z1s = []
@@ -304,7 +302,7 @@ def showInitialConditions(IC, Name='0'):
         print(str(IC[i*k]) + ', ' + str(IC[i*k+1]) + ', ' + str(IC[i*k+2]) + ', ' + str(IC[i*k+3]) + ',')
 
 # Делает solve с случайными или нет НУ (isRand) и рисует x(t)
-def solveAndPlotWithIC(G_inh_div10, isRand, IC, path_graph_x=0, doNeedShow=False):
+def solveAndPlotWithIC(G_inh_, isRand, IC, path_graph_x=0, doNeedShow=False):
 
     if (isRand == 1):
         IC = IC_random_generator(-2, 2)
@@ -312,7 +310,7 @@ def solveAndPlotWithIC(G_inh_div10, isRand, IC, path_graph_x=0, doNeedShow=False
     # Нужно ли делать принт НУ?
     if doNeedShow:
         showInitialConditions(IC)
-    xs, ys, ts, G_inh = graphics_4_with_G_inh(G_inh_div10, IC)
+    xs, ys, ts, G_inh = graphics_4_with_G_inh(G_inh_, IC)
 
     plot_styles = ['--', '-.', '--', 'dotted', '-.', '--', 'dotted']
     plot_colors = ['blue', 'orange', 'green', 'red', 'indigo', 'm', 'yellow']
@@ -581,7 +579,7 @@ def IC_FHN_random_generator(path, doNeedShow=False, pathSave='0'):
     xs, ys, size = read_FHN_coords_tr(path)
     for i in range(k_systems):
         # Рандомим координаты с ФХН
-        randIndex = randint(0, size)
+        randIndex = randint(0, len(xs)-1)
         x = xs[randIndex]
         y = ys[randIndex]
 
@@ -645,16 +643,15 @@ def plot_IC_FHN(IC, pathIC=0, pathFHN=FHN_coords_data_path):
 
 # plot НУ на единичной окружности
 def plot_IC_unit_circle(IC, pathIC=0):
-    fig, ax = plt.subplots(figsize=(5, 5))
-    draw_circle = plt.Circle((0, 0), 1, fill=False)
+    #fig, ax = plt.subplots(figsize=(5, 5))
+    plt.Circle((0, 0), 1, fill=False)
     for i in range(k_systems):
         x = IC[i*k]
         y = IC[i*k + 1]
         x, y = coords_to_unit_circle(x, y)
-        ax.scatter(x, y, 150, label=str(i+1))
+        plt.scatter(x, y, 150, label=str(i+1))
 
     plt.legend()
-    ax.add_artist(draw_circle)
 
     plt.xlim(-1.1, 1.1)
     plt.ylim(-1.1, 1.1)
@@ -662,7 +659,8 @@ def plot_IC_unit_circle(IC, pathIC=0):
     if pathIC != 0:
         plt.savefig(pathIC)
 
-    plt.show()
+    #plt.show()
+    plt.close()
 
     return 0
 
@@ -686,17 +684,20 @@ def plot_last_coords_unit_circle(delays, period, pathCoords=0):
 
         plt.scatter(x_i, y_i, 150, label=str(i+2))
 
-    if pathCoords != 0:
-        plt.savefig(pathCoords)
 
-    plt.title('Итоговое состояние при G_inh=' + str(G_inh))
-    plt.grid()
-    plt.legend()
+
+    ax.set_title('Итоговое состояние при G_inh=' + str(G_inh))
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.grid()
+    ax.legend()
     ax.add_artist(draw_circle)
 
-    plt.xlim(-1.1, 1.1)
-    plt.ylim(-1.1, 1.1)
-    plt.show()
+    ax.set_xlim(-1.1, 1.1)
+    ax.set_ylim(-1.1, 1.1)
+    if pathCoords != 0:
+        fig.savefig(pathCoords)
+    #plt.show()
 
     return 0
 
@@ -732,15 +733,13 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
                 path_graph_R=0, path_graph_last_state=0,doNeedShow=False):
     global tMax, highAccuracy, G_inh
     G_inh = G_inh_
-
-    G_inh_div10 = G_inh * 10.0
+    print(G_inh)
 
     tMax = tMax_
     highAccuracy = highAccuracy_
-    print('before solving, G_inh = ', G_inh)
     # Случайные начальные условия, которые будут одинаковы для всех экспериментов
-    xs, ys, ts, G_inh = solveAndPlotWithIC(G_inh_div10, 0, IC, path_graph_x, doNeedShow)
-    print('after solving, G_inh = ', G_inh)
+    xs, ys, ts, G_inh = solveAndPlotWithIC(G_inh, 0, IC, path_graph_x, doNeedShow)
+
     # Выбираем eq1 в качестве первого элемента, найдем период его колебаний
     # Двумерный массив - 1) Номер нейрона; 2) Информация:
     # 1 - координата максимума, 2 - время максимума, 3 - индекс максимума
@@ -791,6 +790,7 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
 
     # print('R1: ', R1_arr)
     # print('R2: ', R2_arr)
+    plt.figure()
     plt.plot(J_arr, R1_arr, label='R1')
     plt.plot(J_arr, R2_arr, label='R2')
     plt.title('Зависимость R1, R2 при G_inh = ' + str(G_inh))
@@ -816,7 +816,7 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
         last_state.append(z1_IC)
         last_state.append(z2_IC)
 
-    showInitialConditions(last_state, 'Last state')
+    #showInitialConditions(last_state, 'Last state')
     if path_graph_last_state != 0:
         plot_last_coords_unit_circle(delay[-1], period, path_graph_last_state)
 
