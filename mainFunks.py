@@ -64,6 +64,7 @@ initialConditions3 = np.array([1.0, 1.0, 0.1, 0.0,
                                1.0, 1.1, 0.1, 0.0,
                                0.0, 0.1, 0.1, 0.0])
 
+scatter_markers = [4,5,6,7,8,9,10,11]
 
 ################################################### functions ##########################################################
 
@@ -604,6 +605,7 @@ def IC_FHN_random_generator(path, doNeedShow=False, pathSave='0'):
 
         if doNeedShow:
             plt.show()
+        plt.close()
 
     if doNeedShow:
         showInitialConditions(IC)
@@ -640,6 +642,7 @@ def plot_IC_FHN(IC, pathIC=0, pathFHN=FHN_coords_data_path):
     plt.grid()
     plt.show()
     return 0
+
 
 # plot НУ на единичной окружности
 def plot_IC_unit_circle(IC, pathIC=0):
@@ -698,8 +701,43 @@ def plot_last_coords_unit_circle(delays, period, pathCoords=0):
     if pathCoords != 0:
         fig.savefig(pathCoords)
     #plt.show()
+    plt.close()
 
     return 0
+
+
+def generate_your_IC_FHN(arr_indexes_IC, pathIC=0, doNeedShow=False):
+    if len(arr_indexes_IC) != k_systems:
+        return 0
+    xs, ys, size = read_FHN_coords_tr()
+
+    for i in range(k_systems):
+        if arr_indexes_IC[i] >= size or arr_indexes_IC[i] <= -size:
+            return 0
+
+    IC = []
+    plt.plot(xs, ys)
+    for i in range(k_systems):
+        x = xs[arr_indexes_IC[i]]
+        y = ys[arr_indexes_IC[i]]
+        plt.scatter(x, y, 200, label=str(i+1), marker=scatter_markers[i])
+
+        IC.append(x)
+        IC.append(y)
+        IC.append(z1_IC)
+        IC.append(z2_IC)
+
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend()
+    plt.title('Выбранные начальные условия')
+    plt.grid()
+    if pathIC:
+        plt.savefig(pathIC)
+    if doNeedShow:
+        plt.show()
+
+    return np.array(IC)
 
 ####################################### Makers functions ######################################
 
@@ -733,7 +771,6 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
                 path_graph_R=0, path_graph_last_state=0,doNeedShow=False):
     global tMax, highAccuracy, G_inh
     G_inh = G_inh_
-    print(G_inh)
 
     tMax = tMax_
     highAccuracy = highAccuracy_

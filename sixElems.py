@@ -13,7 +13,7 @@ highAccuracy = False
 k_systems = 6
 
 # Пути для сохранения данных
-path_Doc = './Data/results/' + '7elems_UC_big_3' + '.docx'
+path_Doc = './Data/results/' + '7elems_find_cyclop_1' + '.docx'
 
 R_data_path = './Data/r_data_protivofaza2.txt'
 Graphic_data_path = './Data/graphics/saved_fig'
@@ -102,7 +102,7 @@ def make_investigation_with_changed_IC(index, doNeedShow=False):
     path_IC = pathIC + str(index) + '.png'
     path_last_state = path_LS + str(index) + '.png'
 
-    G_inh = round(0.05 + 0.0002 * index, 6)
+    G_inh = round(0.04 + 0.0002 * index, 6)
     # При маленьких значениях параметра связи берем большое время интегрирования
     if G_inh < 0.005:
         tMax = 10000
@@ -113,6 +113,42 @@ def make_investigation_with_changed_IC(index, doNeedShow=False):
 
     IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
     R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions\
+        (G_inh, IC, tMax, highAccuracy, path_x, path_R, path_last_state, doNeedShow)
+
+    return R1_arr, R2_arr, IC, path_x, path_R, path_IC, path_last_state, G_inh
+
+def make_find_cyclop(index, doNeedShow=False):
+    global Nstreams, tMax, highAccuracy
+    print('Exp: ' + str(index))
+    # Костыль
+    m.k_systems = 7
+
+    path_x = Graphic_data_path + '_x' + str(index) + '.png'
+    path_R = Graphic_data_path + '_R' + str(index) + '.png'
+    path_IC = pathIC + str(index) + '.png'
+    path_last_state = path_LS + str(index) + '.png'
+
+    G_inh = 0.05
+    # При маленьких значениях параметра связи берем большое время интегрирования
+    if G_inh < 0.005:
+        tMax = 10000
+    elif G_inh < 0.02:
+        tMax = 5000
+    else:
+        tMax = 1000
+
+    #ind_arr = [1, 2, 3, 339, 340, 341, 169]
+    last_elem = 169 - 5 + index // 100
+    left_elems = - 5 + index % 10
+    right_elems = 339 - 5 + int(index / 10) % 10
+    ind_arr = [left_elems - 1, left_elems, left_elems + 1,
+               right_elems - 1, right_elems, right_elems + 1,
+               last_elem]
+    print(index, ind_arr)
+
+    IC = m.generate_your_IC_FHN(ind_arr, doNeedShow=doNeedShow)
+
+    R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
         (G_inh, IC, tMax, highAccuracy, path_x, path_R, path_last_state, doNeedShow)
 
     return R1_arr, R2_arr, IC, path_x, path_R, path_IC, path_last_state, G_inh
@@ -179,9 +215,9 @@ def make_5_7_walk_to_Ginh():
             mydoc.save(path_Doc)
 
 
-def make_5_7_find_cyclop():
+def make_5_7_show_last_state_UC(existance_func):
     maxCount = 10
-    m.k_systems = 7
+    m.k_systems = 5
     # IC = []
     # # Генерируем НУ
     # for i in range(0, maxCount * Nstreams):
@@ -192,7 +228,7 @@ def make_5_7_find_cyclop():
     # Инициализируем файл doc
     mydoc = docx.Document()
     for i in range(0, maxCount):
-        existance = joblib.Parallel(n_jobs=Nstreams)(joblib.delayed(make_investigation_with_changed_IC)
+        existance = joblib.Parallel(n_jobs=Nstreams)(joblib.delayed(existance_func)
                         (index)
                         for index in range(i * Nstreams, i * Nstreams + Nstreams))
 
@@ -222,19 +258,11 @@ def make_5_7_find_cyclop():
             mydoc.save(path_Doc)
 
 
-#
-# IC_33 = np.array([
-#     1.7909191033523797, 0.3947975055180025, 0.01, 0,
-#     -1.3196057166044584, -0.15643994894012603, 0.01, 0,
-#     1.8357397674399445, 0.19450457790747858, 0.01, 0,
-#     -1.9506185972198538, 0.9232371262393431, 0.01, 0,
-#     1.5533010980534387, 0.014229690959855032, 0.01, 0,
-#     -1.5336019316917493, 0.06607850268758791, 0.01, 0
-# ])
-# IC = m.IC_FHN_random_generator('./Data/FHW_coords.txt', pathIC)
-# #m.plot_IC_FHN(IC)
-# R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions(0.04, IC, 500, doNeedShow=False, path_graph_last_state=pathIC_full)
-# #m.showInitialConditions(last_state, 'Last state')
+# ind_arr = [1, 2, 3, 339, 340, 341, 169]
+# m.k_systems = 7
+# IC = m.generate_your_IC_FHN(ind_arr, doNeedShow=True)
+# R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions(0.04, IC, 500, doNeedShow=True, path_graph_last_state=pathIC_full)
+# make_5_7_show_last_state_UC(make_investigation_with_changed_IC)
+make_5_7_show_last_state_UC(make_find_cyclop)
 
-make_5_7_find_cyclop()
-#make_investigation_with_changed_IC(2)
+
