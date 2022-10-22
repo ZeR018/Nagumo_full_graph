@@ -263,6 +263,6 @@ def make_5_7_show_last_state_UC(existance_func):
 # IC = m.generate_your_IC_FHN(ind_arr, doNeedShow=True)
 # R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions(0.04, IC, 500, doNeedShow=True, path_graph_last_state=pathIC_full)
 # make_5_7_show_last_state_UC(make_investigation_with_changed_IC)
-make_5_7_show_last_state_UC(make_find_cyclop)
+make_5_7_show_last_state_UC(make_investigation_with_changed_IC)
 
 
