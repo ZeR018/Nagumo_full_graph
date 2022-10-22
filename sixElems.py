@@ -13,7 +13,7 @@ highAccuracy = False
 k_systems = 6
 
 # Пути для сохранения данных
-path_Doc = './Data/results/' + '7elems_find_cyclop_1' + '.docx'
+path_Doc = './Data/results/' + '7elems_go_to_Ginh_1' + '.docx'
 
 R_data_path = './Data/r_data_protivofaza2.txt'
 Graphic_data_path = './Data/graphics/saved_fig'
@@ -102,7 +102,7 @@ def make_investigation_with_changed_IC(index, doNeedShow=False):
     path_IC = pathIC + str(index) + '.png'
     path_last_state = path_LS + str(index) + '.png'
 
-    G_inh = round(0.04 + 0.0002 * index, 6)
+    G_inh = round(0.02 + 0.0005 * index, 6)
     # При маленьких значениях параметра связи берем большое время интегрирования
     if G_inh < 0.005:
         tMax = 10000
@@ -111,7 +111,14 @@ def make_investigation_with_changed_IC(index, doNeedShow=False):
     else:
         tMax = 1000
 
-    IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
+    last_elem = 149 - 60 + 19
+    left_elems = 0
+    right_elems = 339
+    ind_arr = [left_elems - 1, left_elems, left_elems + 1,
+               right_elems - 1, right_elems, right_elems + 1,
+               last_elem]
+
+    IC = m.generate_your_IC_FHN(ind_arr, pathIC=path_IC, doNeedShow=doNeedShow)
     R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions\
         (G_inh, IC, tMax, highAccuracy, path_x, path_R, path_last_state, doNeedShow)
 
@@ -138,15 +145,14 @@ def make_find_cyclop(index, doNeedShow=False):
         tMax = 1000
 
     #ind_arr = [1, 2, 3, 339, 340, 341, 169]
-    last_elem = 169 - 5 + index // 100
-    left_elems = - 5 + index % 10
-    right_elems = 339 - 5 + int(index / 10) % 10
+    last_elem = 149 - 60 + 19
+    left_elems = 0 - index
+    right_elems = 339 + index
     ind_arr = [left_elems - 1, left_elems, left_elems + 1,
                right_elems - 1, right_elems, right_elems + 1,
                last_elem]
-    print(index, ind_arr)
 
-    IC = m.generate_your_IC_FHN(ind_arr, doNeedShow=doNeedShow)
+    IC = m.generate_your_IC_FHN(ind_arr, pathIC=path_IC, doNeedShow=doNeedShow)
 
     R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
         (G_inh, IC, tMax, highAccuracy, path_x, path_R, path_last_state, doNeedShow)
@@ -217,13 +223,7 @@ def make_5_7_walk_to_Ginh():
 
 def make_5_7_show_last_state_UC(existance_func):
     maxCount = 10
-    m.k_systems = 5
-    # IC = []
-    # # Генерируем НУ
-    # for i in range(0, maxCount * Nstreams):
-    #     m.k_systems = 7
-    #     IC.append(m.IC_FHN_random_generator(FHN_tr_path))
-    #     #m.showInitialConditions(IC[i])
+    m.k_systems = 7
 
     # Инициализируем файл doc
     mydoc = docx.Document()

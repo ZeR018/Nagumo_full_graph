@@ -685,7 +685,7 @@ def plot_last_coords_unit_circle(delays, period, pathCoords=0):
         x_i = np.cos(phi_i)
         y_i = np.sin(phi_i)
 
-        plt.scatter(x_i, y_i, 150, label=str(i+2))
+        plt.scatter(x_i, y_i, 150, label=str(i+2), marker=scatter_markers[i])
 
 
 
@@ -736,6 +736,7 @@ def generate_your_IC_FHN(arr_indexes_IC, pathIC=0, doNeedShow=False):
         plt.savefig(pathIC)
     if doNeedShow:
         plt.show()
+    plt.close()
 
     return np.array(IC)
 
