@@ -8,12 +8,12 @@ import joblib
 import matplotlib.pyplot as plt
 
 Nstreams = 10
-tMax = 500
+tMax = 1000
 highAccuracy = False
 k_systems = 6
 
 # Пути для сохранения данных
-path_Doc = './Data/results/' + '7elems_go_to_Ginh_1' + '.docx'
+path_Doc = './Data/results/' + '4elems_go_to_Ginh_protivofaza_3' + '.docx'
 
 R_data_path = './Data/r_data_protivofaza2.txt'
 Graphic_data_path = './Data/graphics/saved_fig'
@@ -91,18 +91,16 @@ def remove_elem_from_IC(IC, num_elem=0):
         return np.array(new_IC)
 
 
-def make_investigation_with_changed_IC(index, doNeedShow=False):
+def existance_investigation_with_changed_IC(index, doNeedShow=False):
     global Nstreams, tMax, highAccuracy
     print('Exp: ' + str(index))
-    # Костыль
-    m.k_systems = 7
 
     path_x = Graphic_data_path + '_x' + str(index) + '.png'
     path_R = Graphic_data_path + '_R' + str(index) + '.png'
     path_IC = pathIC + str(index) + '.png'
     path_last_state = path_LS + str(index) + '.png'
 
-    G_inh = round(0.02 + 0.0005 * index, 6)
+    G_inh = round(0.0005 + 0.0005 * index, 6)
     # При маленьких значениях параметра связи берем большое время интегрирования
     if G_inh < 0.005:
         tMax = 10000
@@ -114,21 +112,27 @@ def make_investigation_with_changed_IC(index, doNeedShow=False):
     last_elem = 149 - 60 + 19
     left_elems = 0
     right_elems = 339
-    ind_arr = [left_elems - 1, left_elems, left_elems + 1,
-               right_elems - 1, right_elems, right_elems + 1,
-               last_elem]
+    # ind_arr = [left_elems - 1, left_elems, left_elems + 1,
+    #            right_elems - 1, right_elems, right_elems + 1,
+    #            last_elem]
+
+    ind_arr = [left_elems - 30, left_elems,
+               right_elems, right_elems + 30]
 
     IC = m.generate_your_IC_FHN(ind_arr, pathIC=path_IC, doNeedShow=doNeedShow)
+    #highAccuracy = True
+    #IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
+
     R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions\
         (G_inh, IC, tMax, highAccuracy, path_x, path_R, path_last_state, doNeedShow)
 
     return R1_arr, R2_arr, IC, path_x, path_R, path_IC, path_last_state, G_inh
 
-def make_find_cyclop(index, doNeedShow=False):
+def existance_find_cyclop(index, doNeedShow=False):
     global Nstreams, tMax, highAccuracy
     print('Exp: ' + str(index))
     # Костыль
-    m.k_systems = 7
+    m.k_systems = 4
 
     path_x = Graphic_data_path + '_x' + str(index) + '.png'
     path_R = Graphic_data_path + '_R' + str(index) + '.png'
@@ -145,14 +149,16 @@ def make_find_cyclop(index, doNeedShow=False):
         tMax = 1000
 
     #ind_arr = [1, 2, 3, 339, 340, 341, 169]
-    last_elem = 149 - 60 + 19
-    left_elems = 0 - index
-    right_elems = 339 + index
-    ind_arr = [left_elems - 1, left_elems, left_elems + 1,
-               right_elems - 1, right_elems, right_elems + 1,
-               last_elem]
+    # last_elem = 149 - 60 + 19
+    # left_elems = 0 - index
+    # right_elems = 339 + index
+    # ind_arr = [left_elems - 1, left_elems, left_elems + 1,
+    #            right_elems - 1, right_elems, right_elems + 1,
+    #            last_elem]
+    #
+    # IC = m.generate_your_IC_FHN(ind_arr, pathIC=path_IC, doNeedShow=doNeedShow)
 
-    IC = m.generate_your_IC_FHN(ind_arr, pathIC=path_IC, doNeedShow=doNeedShow)
+    IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
 
     R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
         (G_inh, IC, tMax, highAccuracy, path_x, path_R, path_last_state, doNeedShow)
@@ -202,7 +208,7 @@ def make_5_7_walk_to_Ginh():
     G_inh_arr = np.linspace(G_inh_cp.start, G_inh_cp.stop, G_inh_cp.num)
     for i in range(0, 5):
         loop_index = i * Nstreams + 1
-        existance = joblib.Parallel(n_jobs=Nstreams)(joblib.delayed(make_investigation_with_changed_IC)
+        existance = joblib.Parallel(n_jobs=Nstreams)(joblib.delayed(existance_investigation_with_changed_IC)
                         (IC_22_size_7, index / 1000.0)
                         for index in range(loop_index, loop_index + Nstreams))
 
@@ -221,9 +227,13 @@ def make_5_7_walk_to_Ginh():
             mydoc.save(path_Doc)
 
 
-def make_5_7_show_last_state_UC(existance_func):
-    maxCount = 10
-    m.k_systems = 7
+def make_show_last_state_UC(existance_func):
+    maxCount = 20
+    m.k_systems = 4
+
+    protivofaza_counter = 0
+    full_sync_counter = 0
+    other_counter_indexes = []
 
     # Инициализируем файл doc
     mydoc = docx.Document()
@@ -257,12 +267,34 @@ def make_5_7_show_last_state_UC(existance_func):
             #mydoc.add_page_break()
             mydoc.save(path_Doc)
 
+            eps = 0.03
+            if R1_arr_i[-1] >= 1 - eps and R2_arr_i[-1] >= 1 - eps:
+                full_sync_counter += 1
+            elif R1_arr_i[-1] <= eps and R2_arr_i[-1] >= 1 - eps:
+                protivofaza_counter += 1
+            else:
+                other_counter_indexes.append(i*Nstreams + j)
+
+        print('experiments:', i * Nstreams, 'full_sync:', full_sync_counter, 'protivofaza:', protivofaza_counter)
+        print('unknown:', other_counter_indexes)
+
+    mydoc.add_heading('Results')
+    mydoc.add_paragraph('Num experiments:' + str(maxCount*Nstreams))
+    mydoc.add_paragraph('Protivofaza:' + str(protivofaza_counter))
+    mydoc.add_paragraph('Full_sync:' + str(full_sync_counter))
+    for i in range(len(other_counter_indexes)):
+        mydoc.add_paragraph('Not Full Sync' + str(other_counter_indexes[i]))
+
+    mydoc.save(path_Doc)
+
+
+
 
 # ind_arr = [1, 2, 3, 339, 340, 341, 169]
 # m.k_systems = 7
 # IC = m.generate_your_IC_FHN(ind_arr, doNeedShow=True)
 # R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions(0.04, IC, 500, doNeedShow=True, path_graph_last_state=pathIC_full)
 # make_5_7_show_last_state_UC(make_investigation_with_changed_IC)
-make_5_7_show_last_state_UC(make_investigation_with_changed_IC)
+make_show_last_state_UC(existance_investigation_with_changed_IC)
 
 

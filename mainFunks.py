@@ -24,7 +24,7 @@ V_inh = -1.5
 V_ex = 1.5
 
 # Solving params
-k_systems = 6  # num systems
+k_systems = 4  # num systems
 k = 4  # num equels in one system (one model of neuron)
 tMax = 300
 G_ex = 0.0
@@ -571,7 +571,6 @@ def coords_to_unit_circle(x, y):
 def IC_FHN_random_generator(path, doNeedShow=False, pathSave='0'):
     xs = []
     ys = []
-
     # Если файла нет, создаем
     if not exists(path):
         make_FHN_tr(path)
@@ -616,7 +615,7 @@ def read_FHN_coords_tr(path = FHN_coords_data_path):
     # Читаем из файла все координаты точек FHN
     with open(path, 'r') as f:
         f_data = f.readlines()
-    #print(f_data)
+
     size = int(f_data[0])
 
     xs = []
