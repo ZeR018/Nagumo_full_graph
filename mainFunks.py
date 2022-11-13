@@ -47,24 +47,11 @@ for i in range(0, k_systems):
 z1_IC = 0.01
 z2_IC = 0
 
-# first params
-initialConditions1 = np.array([1.0, 1.0, 0.1, 0.0,
-                               0.1, 0.0, 0.1, 0.0,
-                               0.2, 0.2, 0.1, 0.0,
-                               0.0, 0.1, 0.1, 0.0])
+# For plot
+scatter_markers = [4, 5, 6, 7, 8, 9, 10, 11]
+plot_styles = ['--', '-.', '--', 'dotted', '-.', '--', 'dotted']
+plot_colors = ['blue', 'orange', 'green', 'red', 'indigo', 'm', 'yellow']
 
-initialConditions2 = np.array([1.0, 1.0, 0.1, 0.0,
-                               0.9, 1.0, 0.1, 0.0,
-                               0.2, 0.2, 0.1, 0.0,
-                               0.1, 0.1, 0.1, 0.0])
-
-#                        X    Y   Z1   Z2
-initialConditions3 = np.array([1.0, 1.0, 0.1, 0.0,
-                               1.1, 0.9, 0.1, 0.0,
-                               1.0, 1.1, 0.1, 0.0,
-                               0.0, 0.1, 0.1, 0.0])
-
-scatter_markers = [4,5,6,7,8,9,10,11]
 
 ################################################### functions ##########################################################
 
@@ -163,7 +150,7 @@ def findMaximums(X, t):
     times_of_maximums = []
     indexes_of_maximums = []
     for i in range(200, len(X) - 1):
-        if X[i] > X[i - 1] and X[i] > X[i + 1]:
+        if X[i] > X[i - 1] and X[i] > X[i + 1] and X[i] > 0:
             maximums.append(X[i])
             times_of_maximums.append(t[i])
             indexes_of_maximums.append(i)
@@ -241,12 +228,20 @@ def lagBetweenNeurons_3(main_t, main_i, other_t, other_i, period, index=3):
     # Можно попробовать считать период на каждом шаге
     # period2 = main_t[index] - main_t[index - 1]
     # print('period: ', period, 'period 2:', period2)
-    if abs(main_t[index] - other_t[index - 1]) > abs(main_t[index] - other_t[index]):
-        delay = other_t[index] - main_t[index]
-        delay_i = other_i[index] - main_i[index]
-    else:
-        delay = other_t[index] - main_t[index - 1]
-        delay_i = other_i[index] - main_i[index - 1]
+    try:
+        if abs(main_t[index] - other_t[index - 1]) > abs(main_t[index] - other_t[index]):
+            delay = other_t[index] - main_t[index]
+            delay_i = other_i[index] - main_i[index]
+        else:
+            delay = other_t[index] - main_t[index - 1]
+            delay_i = other_i[index] - main_i[index - 1]
+    except:
+        print('Опять сломалось')
+
+        print(len(main_t), len(other_t))
+        print(other_t)
+        print(other_t[index], main_t[index])
+
 
     return delay, delay_i
 
@@ -303,8 +298,13 @@ def showInitialConditions(IC, Name='0'):
         print(str(IC[i*k]) + ', ' + str(IC[i*k+1]) + ', ' + str(IC[i*k+2]) + ', ' + str(IC[i*k+3]) + ',')
 
 # Делает solve с случайными или нет НУ (isRand) и рисует x(t)
-def solveAndPlotWithIC(G_inh_, isRand, IC, path_graph_x=0, doNeedShow=False):
-
+def solveAndPlotWithIC(G_inh_, isRand, IC, path_graph_x_start=0, path_graph_x_end=0, doNeedShow=False):
+    margins = {  # +++
+        "left": 0.030,
+        "bottom": 0.060,
+        "right": 0.995,
+        "top": 0.950
+    }
     if (isRand == 1):
         IC = IC_random_generator(-2, 2)
 
@@ -313,15 +313,12 @@ def solveAndPlotWithIC(G_inh_, isRand, IC, path_graph_x=0, doNeedShow=False):
         showInitialConditions(IC)
     xs, ys, ts, G_inh = graphics_4_with_G_inh(G_inh_, IC)
 
-    plot_styles = ['--', '-.', '--', 'dotted', '-.', '--', 'dotted']
-    plot_colors = ['blue', 'orange', 'green', 'red', 'indigo', 'm', 'yellow']
-
     # Нужно сделать так, чтобы при tMax > 200 рисовалось только последняя часть последовательности
     if (tMax > 200):
         if highAccuracy:
             new_len = 12000
         else:
-            new_len = 1000
+            new_len = 3000
         short_xs_end = []
         short_ts_end = []
         short_xs_start = []
@@ -337,18 +334,26 @@ def solveAndPlotWithIC(G_inh_, isRand, IC, path_graph_x=0, doNeedShow=False):
             short_ts_start.append(ts[i])
 
         # Осцилограмма на первых точках
-        # plt.figure(figsize=(30, 5))
-        # for i in range(0, k_systems):
-        #     plt.plot(short_ts_start, short_xs_start[i], label=('eq' + str(i + 1)), linestyle=plot_styles[i])
-        #     plt.legend()
-        # plt.xlabel('t')
-        # plt.ylabel('x')
-        # plt.title('Осцилограмма x(t) на первых ' + str(new_len) + ' точках')
-        # plt.grid()
-        # plt.show()
+        plt.figure(figsize=(15, 5))
+        plt.subplots_adjust(**margins)
+        for i in range(0, k_systems):
+            plt.plot(short_ts_start, short_xs_start[i], label=('eq' + str(i + 1)), linestyle=plot_styles[i])
+            plt.legend()
+        plt.xlabel('t')
+        plt.ylabel('x')
+        plt.title('Осцилограмма x(t) на первых ' + str(new_len) + ' точках')
+        plt.grid()
+        # Если передан путь, сохранить график
+        if (path_graph_x_start != 0):
+            plt.savefig(path_graph_x_start)
+        # Нужно ли показывать график
+        if doNeedShow:
+            plt.show()
+        plt.close()
 
         # Осцилограмма на последних точках
         plt.figure(figsize=(15, 5))
+        plt.subplots_adjust(**margins)
         for i in range(0, k_systems):
             plt.plot(short_ts_end, short_xs_end[i],
                 label=('eq' + str(i + 1)), linestyle=plot_styles[i], color=plot_colors[i])
@@ -359,8 +364,8 @@ def solveAndPlotWithIC(G_inh_, isRand, IC, path_graph_x=0, doNeedShow=False):
         plt.grid()
 
         # Если передан путь, сохранить график
-        if (path_graph_x != 0):
-            plt.savefig(path_graph_x)
+        if (path_graph_x_end != 0):
+            plt.savefig(path_graph_x_end)
         # Нужно ли показывать график
         if doNeedShow:
             plt.show()
@@ -642,7 +647,6 @@ def plot_IC_FHN(IC, pathIC=0, pathFHN=FHN_coords_data_path):
     plt.show()
     return 0
 
-
 # plot НУ на единичной окружности
 def plot_IC_unit_circle(IC, pathIC=0):
     #fig, ax = plt.subplots(figsize=(5, 5))
@@ -666,7 +670,6 @@ def plot_IC_unit_circle(IC, pathIC=0):
 
     return 0
 
-
 # plot итогового состояния на единичной окружности
 def plot_last_coords_unit_circle(delays, period, pathCoords=0):
 
@@ -685,8 +688,6 @@ def plot_last_coords_unit_circle(delays, period, pathCoords=0):
         y_i = np.sin(phi_i)
 
         plt.scatter(x_i, y_i, 150, label=str(i+2), marker=scatter_markers[i])
-
-
 
     ax.set_title('Итоговое состояние при G_inh=' + str(G_inh))
     ax.set_xlabel('x')
@@ -767,36 +768,81 @@ def make_investigation_of_dependence_on_inhibitory_coupling():
 # исследование зависимости параметров порядка от начальных условий
 # исследование зависимости параметров порядка от начальных условий
 def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions\
-                (G_inh_, IC, tMax_, highAccuracy_=False,  path_graph_x=0,
+                (G_inh_, IC, tMax_, highAccuracy_=False,  path_graph_x_start=0, path_graph_x_end=0,
                 path_graph_R=0, path_graph_last_state=0,doNeedShow=False):
-    global tMax, highAccuracy, G_inh
+    global tMax, highAccuracy, G_inh, k_systems
     G_inh = G_inh_
 
     tMax = tMax_
     highAccuracy = highAccuracy_
     # Случайные начальные условия, которые будут одинаковы для всех экспериментов
-    xs, ys, ts, G_inh = solveAndPlotWithIC(G_inh, 0, IC, path_graph_x, doNeedShow)
+    xs, ys, ts, G_inh = solveAndPlotWithIC(G_inh, 0, IC, path_graph_x_start, path_graph_x_end, doNeedShow)
 
     # Выбираем eq1 в качестве первого элемента, найдем период его колебаний
-    # Двумерный массив - 1) Номер нейрона; 2) Информация:
+    # Трехмерный массив массив - 1) Номер нейрона; 2) Информация:
     # 1 - координата максимума, 2 - время максимума, 3 - индекс максимума
     inform_about_maximums = []
     for i in range(0, k_systems):
         inform_about_maximums.append(findMaximums(xs[i], ts))
         # print('maximums ' + str(i) + ': ' + str(inform_about_maximums[i][1]))
 
+    # Теперь нужно рассмотреть, не подавлен ли какой элемент
+    depressed_elements = []     # список подавленных элементов
+    nondepressed_elem = 0
+    for i in range(k_systems):
+        if len(inform_about_maximums[i][0]) < 10:
+            depressed_elements.append(i)
+        else:
+            nondepressed_elem = i
+
+    # Если подавлены все кроме одного, возвращаем R1,2 = 1 и заканчиваем
+    if len(depressed_elements) == k_systems - 1:
+        plt.figure()
+        len_R = len(inform_about_maximums[nondepressed_elem][2])-2
+        R1_arr = np.ones(len_R)
+        R2_arr = np.ones(len_R)
+        plt.plot(range(len_R), R1_arr, label='R1')
+        plt.plot(range(len_R), R2_arr, label='R2')
+        plt.title('Зависимость R1, R2 при G_inh = ' + str(G_inh))
+        plt.xlabel('k')
+        plt.ylabel('R1, R2')
+        plt.legend()
+        plt.grid()
+
+        # Если передан путь, сохранить изображение
+        if (path_graph_R != 0):
+            plt.savefig(path_graph_R)
+
+        return R1_arr, R2_arr, IC, depressed_elements
+
+    # Удаляем подавленные элементы
+    # 1) Создаем массив xs без подавленных элементов
+    xs_no_depressed = []
+    for i in range(len(xs)):
+        xs_no_depressed.append(xs[i])
+    for i in reversed(depressed_elements):
+        xs_no_depressed.pop(i)
+    # 2) Меняем k_systems, потому что он используется во множестве функций и
+    #  с ним должны быть связаны размеры xs и прочие
+    k_systems_with_depressed = k_systems
+    k_systems -= len(depressed_elements)
+    # 2) пересчитываем inform_about_maximums
+    inform_about_maximums = []
+    for i in range(0, len(xs_no_depressed)):
+        inform_about_maximums.append(findMaximums(xs_no_depressed[i], ts))
+
+
     delay = []
     R1_arr = []
     R2_arr = []
     J_arr = []
     period = 0
-    for j in range(3, len(inform_about_maximums[0][2]) - 2):
+    for j in range(5, len(inform_about_maximums[0][2]) - 2):
         delay_in_for = []
         delay_t = []
         for i in range(1, k_systems):
             # Находим период на текущем шаге
             period, i_period = findPeriod_i(inform_about_maximums[0], j)
-            # print('period: ', period)
 
             # Находим задержки на текущем шаге
             d, d_t = lagBetweenNeurons_3(inform_about_maximums[0][1], inform_about_maximums[0][2],
@@ -819,14 +865,14 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
         R2_arr.append(R2)
         J_arr.append(j)
 
+    # Классификация не рабочая
     #osc_type = classification(period, delay[-1])
-    if doNeedShow:
-        print('delays:', delay[-1], 'T:', period, 'T/4: ', period / 4.0, 'T/2: ', period / 2.0, '3T/4: ',
-            3.0 * period / 4.0)
+    # if doNeedShow:
+    #     print('delays:', delay[-1], 'T:', period, 'T/4: ', period / 4.0, 'T/2: ', period / 2.0, '3T/4: ',
+    #         3.0 * period / 4.0)
         #print('type: ' + osc_type)
 
-    # print('R1: ', R1_arr)
-    # print('R2: ', R2_arr)
+    # Графики параметров порядка
     plt.figure()
     plt.plot(J_arr, R1_arr, label='R1')
     plt.plot(J_arr, R2_arr, label='R2')
@@ -842,8 +888,7 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
     # Надо ли показывать график
     if doNeedShow:
         plt.show()
-        print('-------------------------------------------------------------------')
-    plt.close()
+        plt.close()
 
     # Необходимо сохранить конечное состояние системы для вывода конечного графика
     last_state = []
@@ -856,11 +901,22 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
     #showInitialConditions(last_state, 'Last state')
     if path_graph_last_state != 0:
         plot_last_coords_unit_circle(delay[-1], period, path_graph_last_state)
-
-
-    return R1_arr, R2_arr, IC
+    plt.close()
+    # Попытка показать весь график
+    # margins = {  # +++
+    #     "left": 0.020,
+    #     "bottom": 0.060,
+    #     "right": 0.990,
+    #     "top": 0.990
+    # }
+    # plt.figure(figsize=(25, 5))
+    # plt.subplots_adjust(**margins)
+    # for i in range(len(xs)):
+    #     plt.plot(ts, xs[i], label=('eq' + str(i + 1)), linestyle=plot_styles[i], color=plot_colors[i])
+    #     plt.legend()
+    # plt.grid()
+    #
+    # plt.show()
+    k_systems = k_systems_with_depressed
+    return R1_arr, R2_arr, IC, depressed_elements
     #return R1_arr, R2_arr, IC, osc_type
-
-
-
-

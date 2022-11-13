@@ -13,7 +13,7 @@ highAccuracy = False
 k_systems = 6
 
 # Пути для сохранения данных
-path_Doc = './Data/results/' + '4elems_go_to_Ginh_protivofaza_3' + '.docx'
+path_Doc = './Data/results/' + '4elems_after_G_critical_2' + '.docx'
 
 R_data_path = './Data/r_data_protivofaza2.txt'
 Graphic_data_path = './Data/graphics/saved_fig'
@@ -93,40 +93,39 @@ def remove_elem_from_IC(IC, num_elem=0):
 
 def existance_investigation_with_changed_IC(index, doNeedShow=False):
     global Nstreams, tMax, highAccuracy
-    print('Exp: ' + str(index))
 
-    path_x = Graphic_data_path + '_x' + str(index) + '.png'
+    path_x_start = Graphic_data_path + '_x' + str(index) + '.png'
+    path_x_end = Graphic_data_path + '_x_end' + str(index) + '.png'
     path_R = Graphic_data_path + '_R' + str(index) + '.png'
     path_IC = pathIC + str(index) + '.png'
     path_last_state = path_LS + str(index) + '.png'
 
-    G_inh = round(0.0005 + 0.0005 * index, 6)
+    G_inh = round(0.1 + 0.001 * index, 6)
     # При маленьких значениях параметра связи берем большое время интегрирования
     if G_inh < 0.005:
         tMax = 10000
     elif G_inh < 0.02:
         tMax = 5000
     else:
-        tMax = 1000
+        tMax = 500
 
     last_elem = 149 - 60 + 19
     left_elems = 0
     right_elems = 339
-    # ind_arr = [left_elems - 1, left_elems, left_elems + 1,
-    #            right_elems - 1, right_elems, right_elems + 1,
-    #            last_elem]
-
-    ind_arr = [left_elems - 30, left_elems,
-               right_elems, right_elems + 30]
+    ind_arr = [left_elems - 5, left_elems,
+               right_elems, right_elems + 5]
 
     IC = m.generate_your_IC_FHN(ind_arr, pathIC=path_IC, doNeedShow=doNeedShow)
     #highAccuracy = True
     #IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
 
-    R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions\
-        (G_inh, IC, tMax, highAccuracy, path_x, path_R, path_last_state, doNeedShow)
+    print('Exp: ' + str(index) + '    G_inh: ' + str(G_inh))
 
-    return R1_arr, R2_arr, IC, path_x, path_R, path_IC, path_last_state, G_inh
+    R1_arr, R2_arr, IC, depressed_elements = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
+        (G_inh, IC, tMax, highAccuracy, path_x_start, path_x_end, path_R, path_last_state, doNeedShow)
+
+    return R1_arr, R2_arr, IC, path_x_start, path_x_end, path_R, path_IC, path_last_state, G_inh
+
 
 def existance_find_cyclop(index, doNeedShow=False):
     global Nstreams, tMax, highAccuracy
@@ -134,7 +133,8 @@ def existance_find_cyclop(index, doNeedShow=False):
     # Костыль
     m.k_systems = 4
 
-    path_x = Graphic_data_path + '_x' + str(index) + '.png'
+    path_x_start = Graphic_data_path + '_x' + str(index) + '.png'
+    path_x_end = Graphic_data_path + '_x_end' + str(index) + '.png'
     path_R = Graphic_data_path + '_R' + str(index) + '.png'
     path_IC = pathIC + str(index) + '.png'
     path_last_state = path_LS + str(index) + '.png'
@@ -160,10 +160,10 @@ def existance_find_cyclop(index, doNeedShow=False):
 
     IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
 
-    R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
-        (G_inh, IC, tMax, highAccuracy, path_x, path_R, path_last_state, doNeedShow)
+    R1_arr, R2_arr, IC, depressed_elements = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
+        (G_inh, IC, tMax, highAccuracy, path_x_start, path_x_end, path_R, path_last_state, doNeedShow)
 
-    return R1_arr, R2_arr, IC, path_x, path_R, path_IC, path_last_state, G_inh
+    return R1_arr, R2_arr, IC, path_x_start, path_x_end, path_R, path_IC, path_last_state, G_inh
 
 
 ############################################### Program ####################################################
@@ -247,11 +247,13 @@ def make_show_last_state_UC(existance_func):
             R1_arr_i = existance[j][0]
             R2_arr_i = existance[j][1]
             IC_i = existance[j][2]
-            path_x = existance[j][3]
-            path_R = existance[j][4]
-            path_IC = existance[j][5]
-            path_last_state = existance[j][6]
-            G_inh = existance[j][7]
+            path_x_start = existance[j][3]
+            path_x_end = existance[j][4]
+            path_R = existance[j][5]
+            path_IC = existance[j][6]
+            path_last_state = existance[j][7]
+            G_inh = existance[j][8]
+
 
 
             # Запись в файл .docx
@@ -261,8 +263,9 @@ def make_show_last_state_UC(existance_func):
                                     str(IC_i[j * m.k + 2]) + ', ' + str(IC_i[j * m.k + 3]) + ',')
 
             mydoc.add_picture(path_IC, width=docx.shared.Inches(4))
-            mydoc.add_picture(path_x, width=docx.shared.Inches(6))
-            mydoc.add_picture(path_last_state, width=docx.shared.Inches(5))
+            mydoc.add_picture(path_x_start, width=docx.shared.Inches(7))
+            mydoc.add_picture(path_x_end, width=docx.shared.Inches(7))
+            #mydoc.add_picture(path_last_state, width=docx.shared.Inches(5))
             mydoc.add_picture(path_R, width=docx.shared.Inches(5))
             #mydoc.add_page_break()
             mydoc.save(path_Doc)
@@ -275,7 +278,7 @@ def make_show_last_state_UC(existance_func):
             else:
                 other_counter_indexes.append(i*Nstreams + j)
 
-        print('experiments:', i * Nstreams, 'full_sync:', full_sync_counter, 'protivofaza:', protivofaza_counter)
+        print('experiments:', (i+1) * Nstreams, 'full_sync:', full_sync_counter, 'protivofaza:', protivofaza_counter)
         print('unknown:', other_counter_indexes)
 
     mydoc.add_heading('Results')
@@ -284,17 +287,16 @@ def make_show_last_state_UC(existance_func):
     mydoc.add_paragraph('Full_sync:' + str(full_sync_counter))
     for i in range(len(other_counter_indexes)):
         mydoc.add_paragraph('Not Full Sync' + str(other_counter_indexes[i]))
+    mydoc.add_page_break()
 
     mydoc.save(path_Doc)
 
 
-
-
-# ind_arr = [1, 2, 3, 339, 340, 341, 169]
-# m.k_systems = 7
-# IC = m.generate_your_IC_FHN(ind_arr, doNeedShow=True)
-# R1_arr, R2_arr, IC = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions(0.04, IC, 500, doNeedShow=True, path_graph_last_state=pathIC_full)
-# make_5_7_show_last_state_UC(make_investigation_with_changed_IC)
 make_show_last_state_UC(existance_investigation_with_changed_IC)
-
-
+# left_elems = 0
+# right_elems = 339
+# ind_arr = [left_elems - 5, left_elems, right_elems, right_elems + 5]
+# IC = m.generate_your_IC_FHN(ind_arr)
+# R1_arr, R2_arr, IC, depressed_elements = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
+#         (0.2, IC, 500, doNeedShow=True)
+#
