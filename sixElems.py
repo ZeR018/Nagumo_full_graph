@@ -13,7 +13,7 @@ highAccuracy = False
 k_systems = 6
 
 # Пути для сохранения данных
-path_Doc = './Data/results/' + '4elems_after_G_critical_2' + '.docx'
+path_Doc = './Data/results/' + '4elems_after_G_critical_full_sync_test2' + '.docx'
 
 R_data_path = './Data/r_data_protivofaza2.txt'
 Graphic_data_path = './Data/graphics/saved_fig'
@@ -100,7 +100,7 @@ def existance_investigation_with_changed_IC(index, doNeedShow=False):
     path_IC = pathIC + str(index) + '.png'
     path_last_state = path_LS + str(index) + '.png'
 
-    G_inh = round(0.1 + 0.001 * index, 6)
+    G_inh = round(0.24 + 0.001 * index, 6)
     # При маленьких значениях параметра связи берем большое время интегрирования
     if G_inh < 0.005:
         tMax = 10000
@@ -112,10 +112,12 @@ def existance_investigation_with_changed_IC(index, doNeedShow=False):
     last_elem = 149 - 60 + 19
     left_elems = 0
     right_elems = 339
-    ind_arr = [left_elems - 5, left_elems,
-               right_elems, right_elems + 5]
+    protivofaza_ic = [left_elems, left_elems,
+               right_elems, right_elems]
 
-    IC = m.generate_your_IC_FHN(ind_arr, pathIC=path_IC, doNeedShow=doNeedShow)
+    full_sync_is = [left_elems - 10, left_elems, left_elems + 10, left_elems + 20]
+
+    IC = m.generate_your_IC_FHN(full_sync_is, pathIC=path_IC, doNeedShow=doNeedShow)
     #highAccuracy = True
     #IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
 
@@ -165,8 +167,78 @@ def existance_find_cyclop(index, doNeedShow=False):
 
     return R1_arr, R2_arr, IC, path_x_start, path_x_end, path_R, path_IC, path_last_state, G_inh
 
+def existance_show_xt(index, doNeedShow=False):
+    global Nstreams, tMax, highAccuracy
+
+    path_x_start = Graphic_data_path + '_x' + str(index) + '.png'
+    path_x_end = Graphic_data_path + '_x_end' + str(index) + '.png'
+    path_IC = pathIC + str(index) + '.png'
+    path_last_state = path_LS + str(index) + '.png'
+
+    G_inh = round(0.2 + 0.001 * index, 6)
+    # При маленьких значениях параметра связи берем большое время интегрирования
+    if G_inh < 0.005:
+        tMax = 10000
+    elif G_inh < 0.02:
+        tMax = 5000
+    else:
+        tMax = 500
+
+    last_elem = 149 - 60 + 19
+    left_elems = 0
+    right_elems = 339
+    protivofaza_ic = [left_elems, left_elems,
+                      right_elems, right_elems]
+
+    full_sync_is = [left_elems - 10, left_elems, left_elems + 10, left_elems + 20]
+
+    IC = m.generate_your_IC_FHN(full_sync_is, pathIC=path_IC, doNeedShow=doNeedShow)
+    # highAccuracy = True
+    # IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
+
+    print('Exp: ' + str(index) + '    G_inh: ' + str(G_inh))
+
+    depressed_elements = m.make_go_and_show_x_graphics\
+        (G_inh, IC, tMax, highAccuracy, path_x_start, path_x_end, path_last_state, doNeedShow)
+
+    return IC, path_x_start, path_x_end, path_IC, path_last_state, G_inh
+
 
 ############################################### Program ####################################################
+
+def make_show_xt():
+    maxCount = 30
+    m.k_systems = 4
+
+    # Инициализируем файл doc
+    mydoc = docx.Document()
+    for i in range(0, maxCount):
+        existance = joblib.Parallel(n_jobs=Nstreams)(joblib.delayed(existance_show_xt)
+                                                     (index)
+                                                     for index in range(i * Nstreams, i * Nstreams + Nstreams))
+
+        for j in range(len(existance)):
+            IC_i = existance[j][0]
+            path_x_start = existance[j][1]
+            path_x_end = existance[j][2]
+            path_IC = existance[j][3]
+            path_last_state = existance[j][4]
+            G_inh = existance[j][5]
+
+            # Запись в файл .docx
+            mydoc.add_heading('Exp = ' + str(i * Nstreams + j) + ', G_inh = ' + str(G_inh), 2)
+            for j in range(0, m.k_systems):
+                mydoc.add_paragraph(str(IC_i[j * m.k]) + ', ' + str(IC_i[j * m.k + 1]) + ', ' +
+                                    str(IC_i[j * m.k + 2]) + ', ' + str(IC_i[j * m.k + 3]) + ',')
+
+            mydoc.add_picture(path_IC, width=docx.shared.Inches(4))
+            mydoc.add_picture(path_x_start, width=docx.shared.Inches(7))
+            mydoc.add_picture(path_x_end, width=docx.shared.Inches(7))
+            # mydoc.add_picture(path_last_state, width=docx.shared.Inches(5))
+            mydoc.add_page_break()
+            mydoc.save(path_Doc)
+
+    mydoc.save(path_Doc)
 
 def make_5_7_walk_to_Ginh():
 
@@ -228,7 +300,7 @@ def make_5_7_walk_to_Ginh():
 
 
 def make_show_last_state_UC(existance_func):
-    maxCount = 20
+    maxCount = 30
     m.k_systems = 4
 
     protivofaza_counter = 0
@@ -267,7 +339,7 @@ def make_show_last_state_UC(existance_func):
             mydoc.add_picture(path_x_end, width=docx.shared.Inches(7))
             #mydoc.add_picture(path_last_state, width=docx.shared.Inches(5))
             mydoc.add_picture(path_R, width=docx.shared.Inches(5))
-            #mydoc.add_page_break()
+            mydoc.add_page_break()
             mydoc.save(path_Doc)
 
             eps = 0.03
@@ -292,11 +364,5 @@ def make_show_last_state_UC(existance_func):
     mydoc.save(path_Doc)
 
 
-make_show_last_state_UC(existance_investigation_with_changed_IC)
-# left_elems = 0
-# right_elems = 339
-# ind_arr = [left_elems - 5, left_elems, right_elems, right_elems + 5]
-# IC = m.generate_your_IC_FHN(ind_arr)
-# R1_arr, R2_arr, IC, depressed_elements = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
-#         (0.2, IC, 500, doNeedShow=True)
-#
+# make_show_last_state_UC(existance_investigation_with_changed_IC)
+make_show_xt()

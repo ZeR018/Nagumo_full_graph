@@ -761,15 +761,40 @@ def make_investigation_of_dependence_on_inhibitory_coupling():
         fig.suptitle('G_inh = ' + str(ex[k][2]))
         plt.show()
 
+def make_go_and_show_x_graphics(G_inh_, IC, tMax_, highAccuracy_=False, path_graph_x_start=0, path_graph_x_end=0,
+                                path_graph_last_state=0, doNeedShow=False):
+    global tMax, highAccuracy, G_inh, k_systems
+    G_inh = G_inh_
 
-# graphics_4_with_G_inh(25)
+    tMax = tMax_
+    highAccuracy = highAccuracy_
+    # Случайные начальные условия, которые будут одинаковы для всех экспериментов
+    xs, ys, ts, G_inh = solveAndPlotWithIC(G_inh, 0, IC, path_graph_x_start, path_graph_x_end, doNeedShow)
 
+    # Выбираем eq1 в качестве первого элемента, найдем период его колебаний
+    # Трехмерный массив массив - 1) Номер нейрона; 2) Информация:
+    # 1 - координата максимума, 2 - время максимума, 3 - индекс максимума
+    inform_about_maximums = []
+    for i in range(0, k_systems):
+        inform_about_maximums.append(findMaximums(xs[i], ts))
+        # print('maximums ' + str(i) + ': ' + str(inform_about_maximums[i][1]))
+
+    # Теперь нужно рассмотреть, не подавлен ли какой элемент
+    depressed_elements = []  # список подавленных элементов
+    nondepressed_elem = 0
+    for i in range(k_systems):
+        if len(inform_about_maximums[i][0]) < 10:
+            depressed_elements.append(i)
+        else:
+            nondepressed_elem = i
+
+    return nondepressed_elem
 
 # исследование зависимости параметров порядка от начальных условий
 # исследование зависимости параметров порядка от начальных условий
 def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions\
                 (G_inh_, IC, tMax_, highAccuracy_=False,  path_graph_x_start=0, path_graph_x_end=0,
-                path_graph_R=0, path_graph_last_state=0,doNeedShow=False):
+                path_graph_R=0, path_graph_last_state=0, doNeedShow=False):
     global tMax, highAccuracy, G_inh, k_systems
     G_inh = G_inh_
 
@@ -837,7 +862,7 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
     R2_arr = []
     J_arr = []
     period = 0
-    for j in range(5, len(inform_about_maximums[0][2]) - 2):
+    for j in range(10, len(inform_about_maximums[0][2]) - 2):
         delay_in_for = []
         delay_t = []
         for i in range(1, k_systems):
