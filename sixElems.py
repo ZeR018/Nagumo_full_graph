@@ -13,7 +13,8 @@ highAccuracy = False
 k_systems = 6
 
 # Пути для сохранения данных
-path_Doc = './Data/results/' + '4elems_after_G_critical_full_sync_test2' + '.docx'
+#path_Doc = './Data/results/' + '4elems_after_G_critical_full_sync_3' + '.docx'
+path_Doc = './Data/results/' + '4_sync_2'
 
 R_data_path = './Data/r_data_protivofaza2.txt'
 Graphic_data_path = './Data/graphics/saved_fig'
@@ -169,13 +170,14 @@ def existance_find_cyclop(index, doNeedShow=False):
 
 def existance_show_xt(index, doNeedShow=False):
     global Nstreams, tMax, highAccuracy
+    highAccuracy = True
 
     path_x_start = Graphic_data_path + '_x' + str(index) + '.png'
     path_x_end = Graphic_data_path + '_x_end' + str(index) + '.png'
     path_IC = pathIC + str(index) + '.png'
     path_last_state = path_LS + str(index) + '.png'
 
-    G_inh = round(0.2 + 0.001 * index, 6)
+    G_inh = round(0.2 + 0.005 * index, 6)
     # При маленьких значениях параметра связи берем большое время интегрирования
     if G_inh < 0.005:
         tMax = 10000
@@ -187,12 +189,12 @@ def existance_show_xt(index, doNeedShow=False):
     last_elem = 149 - 60 + 19
     left_elems = 0
     right_elems = 339
-    protivofaza_ic = [left_elems, left_elems,
-                      right_elems, right_elems]
+    protivofaza_ic = [left_elems, left_elems - 10,
+                      right_elems, right_elems + 10]
 
-    full_sync_is = [left_elems - 10, left_elems, left_elems + 10, left_elems + 20]
+    full_sync_ic = [left_elems - 2, left_elems - 1, left_elems, left_elems + 1]
 
-    IC = m.generate_your_IC_FHN(full_sync_is, pathIC=path_IC, doNeedShow=doNeedShow)
+    IC = m.generate_your_IC_FHN(full_sync_ic, pathIC=path_IC, doNeedShow=doNeedShow)
     # highAccuracy = True
     # IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
 
@@ -207,7 +209,7 @@ def existance_show_xt(index, doNeedShow=False):
 ############################################### Program ####################################################
 
 def make_show_xt():
-    maxCount = 30
+    maxCount = 50
     m.k_systems = 4
 
     # Инициализируем файл doc

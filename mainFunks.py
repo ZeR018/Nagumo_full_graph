@@ -337,7 +337,8 @@ def solveAndPlotWithIC(G_inh_, isRand, IC, path_graph_x_start=0, path_graph_x_en
         plt.figure(figsize=(15, 5))
         plt.subplots_adjust(**margins)
         for i in range(0, k_systems):
-            plt.plot(short_ts_start, short_xs_start[i], label=('eq' + str(i + 1)), linestyle=plot_styles[i])
+            plt.plot(short_ts_start, short_xs_start[i],
+                     label=('eq' + str(i + 1)), linestyle=plot_styles[i], color=plot_colors[i])
             plt.legend()
         plt.xlabel('t')
         plt.ylabel('x')
