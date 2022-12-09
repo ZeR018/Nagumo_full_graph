@@ -10,16 +10,16 @@ import matplotlib.pyplot as plt
 Nstreams = 10
 tMax = 1000
 highAccuracy = False
-k_systems = 6
+k_systems = 4
 
 # Пути для сохранения данных
 #path_Doc = './Data/results/' + '4elems_after_G_critical_full_sync_3' + '.docx'
-path_Doc = './Data/results/' + '4_sync_2'
+path_Doc = './Data/results/' + 'protazhka_IC_3' + '.docx'
 
 R_data_path = './Data/r_data_protivofaza2.txt'
-Graphic_data_path = './Data/graphics/saved_fig'
+Graphic_data_path = './Data/graphics/fig'
 pathIC_full = './Data/graphics/savedIC_0.02.png'
-pathIC = './Data/graphics/savedIC'
+pathIC = './Data/graphics/IC'
 path_LS = './Data/graphics/finalState'
 FHN_tr_path = './Data/FHW_coords.txt'
 
@@ -28,8 +28,6 @@ IC_A = np.array([
     -2.502158188845857, 2.7191901965415948, 0.01, 0.0,
     2.7191901965415948, 1.724635452347087, 0.01, 0.0,
     1.724635452347087, 1.543752019655198, 0.01, 0.0,
-    1.543752019655198, -2.4268647972584514, 0.01, 0.0,
-    -2.4268647972584514, -0.9713907674897078, 0.01, 0.0
 ])
 
 #################################################### Functions #################################################
@@ -124,7 +122,7 @@ def existance_investigation_with_changed_IC(index, doNeedShow=False):
 
     print('Exp: ' + str(index) + '    G_inh: ' + str(G_inh))
 
-    R1_arr, R2_arr, IC, depressed_elements = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
+    R1_arr, R2_arr, IC, depressed_elements, last_state = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
         (G_inh, IC, tMax, highAccuracy, path_x_start, path_x_end, path_R, path_last_state, doNeedShow)
 
     return R1_arr, R2_arr, IC, path_x_start, path_x_end, path_R, path_IC, path_last_state, G_inh
@@ -163,7 +161,7 @@ def existance_find_cyclop(index, doNeedShow=False):
 
     IC = m.IC_FHN_random_generator(FHN_tr_path, pathSave=path_IC)
 
-    R1_arr, R2_arr, IC, depressed_elements = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
+    R1_arr, R2_arr, IC, depressed_elements, last_state = m.make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_conditions \
         (G_inh, IC, tMax, highAccuracy, path_x_start, path_x_end, path_R, path_last_state, doNeedShow)
 
     return R1_arr, R2_arr, IC, path_x_start, path_x_end, path_R, path_IC, path_last_state, G_inh
@@ -200,7 +198,7 @@ def existance_show_xt(index, doNeedShow=False):
 
     print('Exp: ' + str(index) + '    G_inh: ' + str(G_inh))
 
-    depressed_elements = m.make_go_and_show_x_graphics\
+    depressed_elements, last_state = m.make_go_and_show_x_graphics\
         (G_inh, IC, tMax, highAccuracy, path_x_start, path_x_end, path_last_state, doNeedShow)
 
     return IC, path_x_start, path_x_end, path_IC, path_last_state, G_inh
@@ -365,6 +363,125 @@ def make_show_last_state_UC(existance_func):
 
     mydoc.save(path_Doc)
 
+def make_go_on_last_state():
+    last_state = []
 
-# make_show_last_state_UC(existance_investigation_with_changed_IC)
-make_show_xt()
+    # Определяем НУ для первой итерации
+    last_elem = 149 - 60 + 19
+    left_elems = 0
+    right_elems = 339
+    protivofaza_ic = [left_elems, left_elems - 10,
+                      right_elems, right_elems + 10]
+    full_sync_ic = [left_elems - 2, left_elems - 1, left_elems, left_elems + 1]
+    path_IC_0 = pathIC + str(0) + '.png'
+    IC = m.generate_your_IC_FHN(full_sync_ic, pathIC=path_IC_0)
+
+    # Инициализируем файл doc
+    mydoc = docx.Document()
+    # Записываем НУ
+    mydoc.add_paragraph('Начальные условия')
+    for j in range(0, m.k_systems):
+        mydoc.add_paragraph(str(IC[j * m.k]) + ', ' + str(IC[j * m.k + 1]) + ', ' +
+                            str(IC[j * m.k + 2]) + ', ' + str(IC[j * m.k + 3]) + ',')
+    mydoc.add_picture(path_IC_0)
+    mydoc.add_page_break()
+    mydoc.save(path_Doc)
+
+    # Сохраняет, в каком состоянии оказались элементы на шаге
+    res_states = []
+    changing = []
+    for i in range(1, 600):
+        G_inh_i = 3.0 - i / 50.0
+
+        if G_inh_i <= 0:
+            break
+
+        print('Exp ' + str(i) + ', G_inh = ' + str(G_inh_i))
+
+        # При маленьких значениях параметра связи берем большое время интегрирования
+        if G_inh_i < 0.005:
+            tMax = 5000
+        elif G_inh_i < 0.02:
+            tMax = 2000
+        else:
+            tMax = 500
+
+        # Генерируем пути для картинок
+        path_x_start = Graphic_data_path + '_x' + str(G_inh_i) + '.png'
+        path_x_end = Graphic_data_path + '_x_end' + str(G_inh_i) + '.png'
+        path_IC = pathIC + str(G_inh_i) + '.png'
+        path_last_state = path_LS + str(G_inh_i) + '.png'
+
+        # Основная функция
+        depressed_elements, last_state = m.make_go_and_show_x_graphics(G_inh_i, IC, tMax, highAccuracy_=False,
+            path_graph_x_start=path_x_start, path_graph_x_end=path_x_end, path_graph_last_state=path_last_state,
+                                                                       doNeedShow=False)
+        # Анализируем кол-во синхронизированых между собой элементов
+        eps = 0.1
+        same_elems_counter = 0
+        for i in range(0, k_systems):
+            for j in range(0, k_systems):
+                if abs(last_state[i*m.k] - last_state[j*m.k]) < eps and i != j:
+                    same_elems_counter += 1
+
+        res_states.append(same_elems_counter)
+        if len(res_states) > 1:
+            if res_states[-1] != res_states[-2]:
+                print('on this step stap state was changed G_inh =' + str(G_inh_i))
+                print(res_states[-2], res_states[-1])
+                changing.append(i)
+
+        # Записываем всё в файл
+        mydoc.add_heading('Exp = ' + str(i) + ', G_inh = ' + str(G_inh_i), 2)
+        for j in range(0, m.k_systems):
+            mydoc.add_paragraph(str(IC[j * m.k]) + ', ' + str(IC[j * m.k + 1]) + ', ' +
+                                str(IC[j * m.k + 2]) + ', ' + str(IC[j * m.k + 3]) + ',')
+        mydoc.add_picture(path_x_start, width=docx.shared.Inches(6.5))
+        mydoc.add_picture(path_x_end, width=docx.shared.Inches(6.5))
+        mydoc.add_picture(path_last_state, width=docx.shared.Inches(3))
+        mydoc.add_page_break()
+        mydoc.save(path_Doc)
+
+        # Берем НУ как последнее состояние предыдущего элемента
+        IC = last_state
+
+    if len(changing) != 0:
+        mydoc.add_heading('Шаги, на которых происходило изменение состояния:')
+        for i in range(len(changing)):
+            mydoc.add_paragraph(changing[i])
+        mydoc.save(path_Doc)
+
+#make_go_on_last_state()
+
+# IC = np.array([
+#     -0.878048233184636, -0.2036613751814247, 0.01, 0,
+#     -0.878048233184636, -0.2036613751814247, 0.01, 0,
+#     -0.878048233184636, -0.2137613751814247, 0.01, 0,
+#     -0.878048233184636, -0.2137613751814247, 0.01, 0])
+#
+# for i in range(10):
+#     G_inh = i / 2.0
+#     m.make_go_and_show_x_graphics(G_inh, IC, 500, path_graph_last_state=path_LS + str(i) + '.png',
+#                                   path_graph_x_start=(Graphic_data_path + '_x' + str(i) +'.png'),
+#                                   path_graph_x_end=(Graphic_data_path + '_x' + str(i) + '_end.png'), highAccuracy_=True)
+
+# left_elems = 0
+# right_elems = 339
+# protivofaza_ic = [left_elems, left_elems - 10,
+#                   right_elems, right_elems + 10]
+# full_sync_ic = [left_elems, left_elems, left_elems, left_elems]
+# path_IC_0 = pathIC + str(0) + '.png'
+# IC = m.generate_your_IC_FHN(full_sync_ic, pathIC=path_IC_0)
+# m.make_go_and_show_x_graphics(5.0, IC, 2000, path_graph_last_state=path_LS + '.png',
+#     path_graph_x_start=(Graphic_data_path+'_x.png'), path_graph_x_end=(Graphic_data_path+'_x_end.png'), highAccuracy_=True)
+
+'3-1'
+left_elems = 0
+right_elems = 339
+protivofaza_ic = [left_elems, left_elems - 10,
+                  right_elems, right_elems + 10]
+path_IC_0 = pathIC + str(0) + '.png'
+IC = m.generate_your_IC_FHN(protivofaza_ic, pathIC=path_IC_0)
+G_inh = 0.187
+nondepressed_elem, last_state = m.make_go_and_show_x_graphics(G_inh_, IC, tMax_, highAccuracy_=False, path_graph_x_start=0, path_graph_x_end=0,
+                                path_graph_last_state=0, doNeedShow=False)

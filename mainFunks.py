@@ -52,6 +52,8 @@ scatter_markers = [4, 5, 6, 7, 8, 9, 10, 11]
 plot_styles = ['--', '-.', '--', 'dotted', '-.', '--', 'dotted']
 plot_colors = ['blue', 'orange', 'green', 'red', 'indigo', 'm', 'yellow']
 
+save_IC_data_path = '/Data/initial_conditions/'
+
 
 ################################################### functions ##########################################################
 
@@ -633,19 +635,25 @@ def read_FHN_coords_tr(path = FHN_coords_data_path):
         ys.append(float(line[1]))
     return xs, ys, size
 
-def plot_IC_FHN(IC, pathIC=0, pathFHN=FHN_coords_data_path):
+def plot_IC_FHN(IC, pathIC=0, pathFHN=FHN_coords_data_path, text = '0'):
     xs, ys, size = read_FHN_coords_tr(FHN_coords_data_path)
 
     plt.plot(xs, ys)
     for i in range(k_systems):
         plt.scatter(IC[i*k], IC[i*k+1], 150, label=str(i+1))
     plt.legend()
+    plt.xlabel('x')
+    plt.ylabel('y')
+
+    if text != '0':
+        plt.title(text)
 
     if pathIC != 0:
         plt.savefig(pathIC)
 
     plt.grid()
     plt.show()
+    plt.close()
     return 0
 
 # plot НУ на единичной окружности
@@ -741,6 +749,49 @@ def generate_your_IC_FHN(arr_indexes_IC, pathIC=0, doNeedShow=False):
 
     return np.array(IC)
 
+
+import os
+def write_IC(fName, IC):
+
+    path = os.getcwd()
+    path += save_IC_data_path
+
+    # Если такой директории нет, создаем
+    if not os.path.exists(path):
+        try:
+            os.mkdir(path)
+        except OSError:
+            print("Создать директорию %s не удалось" % path)
+
+    file_path = path + fName
+
+    f = open(file_path, 'w')
+    for i in range(int(len(IC) / k)):
+        f.write(str(IC[i*k]) + ',' + str(IC[i*k + 1]) + ',' +
+                str(IC[i*k+2]) + ',' + str(IC[i*k + 3]) + '\n')
+    f.close()
+
+    return 0
+
+
+def read_IC(fName):
+
+    path = os.getcwd()
+    file_path = path + save_IC_data_path + fName
+
+    if not exists(file_path):
+        return -1
+
+    IC = []
+    with open(file_path) as f:
+        for line in f:
+            line_split = line.split(',')
+            for i in line_split:
+                IC.append(float(i))
+
+    return IC
+
+
 ####################################### Makers functions ######################################
 
 
@@ -789,7 +840,17 @@ def make_go_and_show_x_graphics(G_inh_, IC, tMax_, highAccuracy_=False, path_gra
         else:
             nondepressed_elem = i
 
-    return nondepressed_elem
+    # Необходимо сохранить конечное состояние системы для вывода конечного графика
+    last_state = []
+    for i in range(k_systems):
+        last_state.append(xs[i][-1])
+        last_state.append(ys[i][-1])
+        last_state.append(z1_IC)
+        last_state.append(z2_IC)
+    text = 'Итоговое состояние при G_inh = ' + str(G_inh)
+    plot_IC_FHN(last_state, path_graph_last_state, FHN_coords_data_path, text=text)
+
+    return nondepressed_elem, last_state
 
 # исследование зависимости параметров порядка от начальных условий
 # исследование зависимости параметров порядка от начальных условий
@@ -920,7 +981,7 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
     last_state = []
     for i in range(k_systems):
         last_state.append(xs[i][-1])
-        last_state.append(ys[1][-1])
+        last_state.append(ys[i][-1])
         last_state.append(z1_IC)
         last_state.append(z2_IC)
 
@@ -944,5 +1005,5 @@ def make_investigation_of_the_dependence_of_the_order_parameters_on_the_initial_
     #
     # plt.show()
     k_systems = k_systems_with_depressed
-    return R1_arr, R2_arr, IC, depressed_elements
+    return R1_arr, R2_arr, IC, depressed_elements, last_state
     #return R1_arr, R2_arr, IC, osc_type
